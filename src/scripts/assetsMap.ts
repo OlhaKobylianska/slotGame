@@ -7,7 +7,6 @@ export const assetsMap = {
      { name: 'spin_play', url: 'images/spin_play.png'},
      { name: 'spin_stop', url: 'images/spin_stop.png'},
      { name: 'spin_arrow', url: 'images/spin_arrow.png'},
-     { name: 'stop', url: 'images/stop.png'},
      { name: 'speed', url: 'images/speed.png'},
      { name: 'speed2', url: 'images/speed2.png'},
      { name: 'speed_text', url: 'images/speed_text.png'},

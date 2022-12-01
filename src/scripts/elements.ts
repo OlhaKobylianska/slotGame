@@ -1,46 +1,20 @@
 import * as PIXI from 'pixi.js'
 import { app } from './app';
-import { spinRunFunc, spinStopFunc } from './events';
+import { iReals } from './interfaces';
 
-function createSprite(typeElem: string, anchor: number, scaleElem: number, widthElem: number, posX: number = 0, posY: number = 0): PIXI.Sprite {
-  const elem = PIXI.Sprite.from(typeElem);
-  anchor ? elem.anchor.set(anchor) : null
-  widthElem ? elem.width = widthElem : null
-  scaleElem ? elem.scale.set(scaleElem) : null
-  posX ? elem.position.x = posX : null
-  posY ? elem.position.y = posY : null
+const REEL_WIDTH = 220
+const SYMBOL_SIZE = 120
+export const reels: iReals[] = [];
+
+function createSprite(typeElem: string | PIXI.Texture[], anchor: number, scaleElem: number | string, widthElem: number, posX: number | string = 0, posY: number | string = 0, add: number = 0): PIXI.Sprite {
+  let elem!: PIXI.Sprite
+  typeof typeElem === 'string' ? elem = PIXI.Sprite.from(typeElem) : elem = new PIXI.Sprite(typeElem[Math.floor(Math.random() * typeElem.length)]);
+  anchor ? elem.anchor.set(anchor) : null;
+  widthElem ? elem.width = widthElem : null;
+  if (scaleElem) typeof scaleElem === 'number' ? elem.scale.set(scaleElem) : elem.scale.set(Math.min(SYMBOL_SIZE / elem.width, SYMBOL_SIZE / elem.height));
+  if (posX) typeof posX === 'number' ? elem.position.x = posX : elem.position.x = Math.round((SYMBOL_SIZE - elem.width) / 2);
+  if (posY) typeof posY === 'number' ? elem.position.y = posY : elem.position.y = add * SYMBOL_SIZE + 10;
   return elem
-}
-
-function createAnimatedSprite(typeElem: string[], anchor: number, scaleElem: number, posX: number = 0, posY: number = 0, speed: number): PIXI.AnimatedSprite | undefined {
-  let elem
-
-  if (typeElem.length >= 1) {
-    const arrElem = typeElem.map((item: string) => PIXI.Texture.from(item))
-    elem = new PIXI.AnimatedSprite(arrElem);
-    anchor ? elem.anchor.set(anchor) : null
-    scaleElem ? elem.scale.set(scaleElem) : null
-    posX ? elem.position.x = posX : null
-    posY ? elem.position.y = posY : null
-
-    elem.loop = true;
-    elem.animationSpeed = speed;
-    elem.play();
-  }
-
-  return elem
-
-
-  //   this.speedMainPic = new PIXI.AnimatedSprite([
-  //     PIXI.Texture.from('speed'), PIXI.Texture.from('speed2')
-  //   ])
-
-  // this.speedMainPic.scale.set(0.7)
-  // this.speedMainPic.anchor.set(0.5);
-  // this.speedMainPic.position.y = 5
-  // this.speedMainPic.loop = true;
-  // this.speedMainPic.animationSpeed = 0.04;
-  // this.speedMainPic.play();
 }
 
 function createContainer(posX: number, posY: number): PIXI.Container {
@@ -48,6 +22,20 @@ function createContainer(posX: number, posY: number): PIXI.Container {
   posX ? container.position.x = posX : null
   posY ? container.position.y = posY : null
   return container
+}
+
+function createFilter(): PIXI.Filter {
+  const filter = new PIXI.filters.ColorMatrixFilter();
+  let count = 0;
+  app.ticker.add(() => {
+    count += 0.1;
+    const { matrix } = filter;
+    matrix[1] = Math.sin(count) * 3;
+    matrix[2] = Math.cos(count);
+    matrix[3] = Math.cos(count) * 1.5;
+    matrix[4] = Math.sin(count / 3) * 2;
+  });
+  return filter
 }
 
 export class Background {
@@ -59,7 +47,7 @@ export class Background {
     this.view = new PIXI.Container()
 
     this.bg = createSprite('bg', 0.5, 0, window.innerWidth)
-    this.background = createSprite('background', 0.5, 1.15, 0)
+    this.background = createSprite('background', 0.5, 1.15, 0, 0, -50)
 
     this.view.addChild(this.bg)
     this.view.addChild(this.background)
@@ -76,19 +64,16 @@ export class Spin {
   private spinMainPic: PIXI.Sprite
   private spinTextStart: PIXI.Sprite
   private spinTextStop: PIXI.Sprite
-  private spinStop: PIXI.Sprite
   private spinArrow: PIXI.Sprite
 
   constructor() {
-    this.view = createContainer(600, 120)
+    this.view = createContainer(0, 230)
 
     this.spinBg = createSprite('spin_bg', 0.5, 0.7, 0)
-    this.spinMainPic = createSprite('spin', 0.5, 0.7, 0, 0, 10)
+    this.spinMainPic = createSprite('spin', 0.5, 0.7, 0, 0, 5)
     this.spinTextStart = createSprite('spin_play', 0.5, 0.7, 0, 0, -50)
-    this.spinTextStop = createSprite('spin_stop', 0.5, 0.7, 0, 0, -70)
+    this.spinTextStop = createSprite('spin_stop', 0.5, 0.7, 0, 0, -65)
     this.spinTextStop.visible = false
-    this.spinStop = createSprite('stop', 0.5, 0.65, 0, 0, 0)
-    this.spinStop.visible = false
     this.spinArrow = createSprite('spin_arrow', 0.5, 0.65, 0, 0, 0)
 
     app.ticker.add((delta) => {
@@ -99,14 +84,11 @@ export class Spin {
     this.view.addChild(this.spinMainPic)
     this.view.addChild(this.spinTextStart)
     this.view.addChild(this.spinTextStop)
-    this.view.addChild(this.spinStop)
     this.view.addChild(this.spinArrow)
 
-    this.spinMainPic.interactive = true;
-    this.spinMainPic.on('click', spinRunFunc)
-    
-    this.spinStop.interactive = true;
-    this.spinStop.on('click', spinStopFunc)
+    const filter = createFilter()
+    this.spinTextStart.filters = [filter];
+    this.spinTextStop.filters = [filter];
   }
 
   get viewContainer(): PIXI.Container {
@@ -114,26 +96,56 @@ export class Spin {
   }
 }
 
-export class Speed {
+
+export class Reels {
+  private slotTextures: PIXI.Texture[] = [
+    PIXI.Texture.from('value_1'),
+    PIXI.Texture.from('value_2'),
+    PIXI.Texture.from('value_3')
+  ];
   private view: PIXI.Container
-  private speedBg: PIXI.Sprite
-  private speedMainPic: PIXI.AnimatedSprite | undefined
-  private speedText: PIXI.Sprite
-  private speedValue: PIXI.Sprite
-  private value: number = 2
 
   constructor() {
-    this.view = createContainer(600, -150)
+    this.view = createContainer(-280, -150)
 
-    this.speedBg = createSprite('spin_bg', 0.5, 0.7, 0)
-    this.speedMainPic = createAnimatedSprite(['speed', 'speed2'], 0.5, 0.7, 0, 5, 0.04)
-    this.speedText = createSprite('speed_text', 0.5, 0.7, 0, 0, -42)
-    this.speedValue = createSprite(`speed_x${this.value}`, 0.5, 0.65, 0, 0, 0)
+    for (let i = 0; i < 3; i++) {
+      const rc = createContainer(i * REEL_WIDTH, 0)
+      this.view.addChild(rc);
 
-    this.view.addChild(this.speedBg)
-    this.speedMainPic ? this.view.addChild(this.speedMainPic) : null
-    this.view.addChild(this.speedText)
-    this.view.addChild(this.speedValue)
+      const reel: iReals = {
+        container: rc,
+        symbols: [],
+        position: 0,
+        previousPosition: 0,
+        blur: new PIXI.filters.BlurFilter()
+      };
+
+      for (let j = 0; j < 3; j++) {
+        const symbol = createSprite(this.slotTextures, 0, 'reels', 0, 'reels', 'reels', j)
+        reel.symbols.push((symbol));
+        rc.addChild(symbol);
+      }
+      reels.push(reel);
+    }
+
+      app.ticker.add(() => {
+        for (let i = 0; i < reels.length; i++) {
+            const r = reels[i];
+            r.blur.blurY = (+r.position - r.previousPosition) * 8;
+            r.previousPosition = +r.position;
+
+            for (let j = 0; j < r.symbols.length; j++) {
+                const s = r.symbols[j];
+                const prevy = s.y;
+                s.y = ((+r.position + j) % r.symbols.length) * SYMBOL_SIZE - SYMBOL_SIZE;
+                if (s.y < 0 && prevy > SYMBOL_SIZE) {
+                    s.texture = this.slotTextures[Math.floor(Math.random() * this.slotTextures.length)];
+                    s.scale.x = s.scale.y = Math.min(SYMBOL_SIZE / s.texture.width, SYMBOL_SIZE / s.texture.height);
+                    s.x = Math.round((SYMBOL_SIZE - s.width) / 2);
+                }
+            }
+        }
+    });
   }
 
   get viewContainer(): PIXI.Container {
