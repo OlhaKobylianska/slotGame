@@ -13,7 +13,5 @@ export interface iTween {
   target: number,
   easing : Function,
   time: number,
-  change: Function | null,
-  complete: Function | null,
-  start: number ,
+  start: number
 };

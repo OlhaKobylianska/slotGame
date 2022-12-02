@@ -3,6 +3,7 @@ import { startPlay } from "./playGame";
 
 let startGame: boolean = false
 let rotateSpin!: GSAPAnimation
+export let stopReels: boolean = false
 
 class RunSpin {
   count: number = 0
@@ -81,9 +82,10 @@ class SpeedSpin {
   }
 };
 
-class ChangeTitle {
+export class ChangeTitle {
   step: RunSpin
   container: PIXI.Container
+  extra!: number
 
   constructor(step: RunSpin, container: PIXI.Container) {
     this.step = step;
@@ -94,7 +96,13 @@ class ChangeTitle {
     this.container.children[2].visible = startGame
     this.container.children[3].visible = !startGame
 
-    startGame ? this.step.change(new Jump(this.step, this.container)) : startPlay()
+   if(startGame){
+      stopReels = true
+    } else {
+      startPlay()
+      stopReels = false
+    }
+
     startGame = !startGame
   }
 };
