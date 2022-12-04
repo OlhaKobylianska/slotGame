@@ -1,3 +1,7 @@
+export interface iAssetsMap {
+  sptites: { name: string, url: string }[]
+}
+
 export interface iReals {
   container: PIXI.Container,
   symbols: PIXI.Sprite[],
@@ -9,9 +13,9 @@ export interface iReals {
 export interface iTween {
   object: iReals,
   property: string,
-  propertyBeginValue: iReals[],
+  propertyBeginValue: string | number,
   target: number,
-  easing : Function,
+  easing: Function,
   time: number,
   start: number
 };

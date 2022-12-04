@@ -1,79 +1,121 @@
-import { app } from './app';
-import { reels } from './elements';
-import { stopReels } from './events';
-import { iReals, iTween } from './interfaces';
+import { gsap } from "gsap";
+import { reels } from "./elements";
+import { iTween } from "./interfaces";
+import { tweening } from "./loadGame";
 
-let running = false;
-let stopCombination : boolean = false
-const tweening: iTween[] = [];
-let phase!: number
+export let startGame: boolean = false
+export let containerSpin!: PIXI.Container
+export let containerReels!: PIXI.Container
+let rotateSpin!: GSAPAnimation
 
-export function startPlay() {
-  if (running) return;
-  running = true;
+class RunSpin {
+  count: number = 0
+  currentState: Jump
 
-  for (let i = 0; i < reels.length; i++) {
-    const r = reels[i];
-    const extra = Math.floor(Math.random() * 300000);
-    const target = +r.position + 10 + i * 5 + extra;
-    const time = 2500 + i * 600 + extra * 600;
-    tweenTo(r, 'position', target, time, backout(0.5));
+  constructor() {
+    this.currentState = new Jump(this)
   }
-}
 
-function reelsComplete() {
-  running = false;
-}
-
-function tweenTo(object: iReals, property: string, target: number, time: number, easing: Function) {
-  const tween: iTween = {
-    object,
-    property,
-    propertyBeginValue: object[(property as keyof object)],
-    target,
-    easing,
-    time,
-    start: Date.now(),
+  change = (state: Jump | SpeedSpin | ChangeTitle): void => {
+    if (this.count++ >= 2) return;
+    this.currentState = state;
+    this.currentState.go()
   };
 
-  tweening.push(tween);
-  return tween;
+  startGame = (): void => {
+    this.currentState.go();
+  };
 }
 
-export const loadGame = () => {
-  app.ticker.add(() => {
-    const now = Date.now();
-    const remove = [];
+class Jump {
+  step: RunSpin
 
-    for (let i = 0; i < tweening.length; i++) {
-      const t: iTween = tweening[i];
-      if(!stopReels) phase = (now - t.start) / t.time;
-      if(stopReels) {
-        phase = 0.4 + (now - t.start) / t.time
-        setTimeout(() => {
-          stopCombination = true
-        }, 2000)
+  constructor(step: RunSpin) {
+    this.step = step
+  }
+
+  go = (): void => {
+    startGame = !startGame
+
+    if (startGame) {
+      containerReels.children.forEach((elem) => {
+        gsap.fromTo(elem, { y: - Math.random() * 30 }, { y: 0 });
+      })
+    }
+
+    setTimeout(() => { this.step.change(new SpeedSpin(this.step)) }, 500)
+  }
+};
+
+class SpeedSpin {
+  step: RunSpin
+
+  constructor(step: RunSpin) {
+    this.step = step;
+  }
+
+  go = (): void => {
+    if (startGame) {
+      rotateSpin.play();
+      gsap.to(rotateSpin, { timeScale: 1, duration: 1 });
+
+      for (let i = 0; i < reels.length; i++) {
+        const r = reels[i];
+        const extra = Math.floor(Math.random() * 3);
+        const target = +r.position + 10 + i * 5 + extra;
+        const time = 2500 + i * 600 + extra * 600;
+        const tween: iTween = {
+          object: r,
+          property: 'position',
+          propertyBeginValue: r['position'],
+          target,
+          easing: (t: number) => (--t * t * ((0.5 + 1) * t + 0.5) + 1),
+          time,
+          start: Date.now(),
+        };
+
+        tweening.push(tween);
       }
 
-      t.object['position'] = lerp(+t.propertyBeginValue, t.target, t.easing(phase));
-
-      if (stopReels && stopCombination) {
-        reelsComplete()
-        t.object['position'] = t.target;
-        remove.push(t);
-        stopCombination = false
-      }
+    } else {
+      gsap.to(rotateSpin,
+        { timeScale: 0, duration: 1, onComplete: function () { this.pause(); } }
+      );
     }
-    for (let i = 0; i < remove.length; i++) {
-      tweening.splice(tweening.indexOf(remove[i]), 1);
-    }
-  });
-}
 
-function lerp(a1: number, a2: number, t: number): number {
-  return a1 * (1 - t) + a2 * t;
-}
+    this.step.change(new ChangeTitle(this.step));
+  }
+};
 
-function backout(amount: number) {
-  return (t: number) => (--t * t * ((amount + 1) * t + amount) + 1);
+export class ChangeTitle {
+  step: RunSpin
+
+  constructor(step: RunSpin) {
+    this.step = step;
+  }
+
+  go = (): void => {
+    containerSpin.children[2].visible = !startGame
+    containerSpin.children[3].visible = startGame
+  }
+};
+
+export const spinRunFunc = (spinContainer: PIXI.Container, reelsContainer: PIXI.Container): void => {
+  spinContainer.children[1].interactive = false
+  containerSpin = spinContainer
+  containerReels = reelsContainer
+
+  if (!rotateSpin) {
+    rotateSpin = gsap
+      .to([spinContainer.children[1], spinContainer.children[4]], {
+        rotation: 360,
+        duration: 0.3,
+        ease: 'none',
+        repeat: -1,
+        paused: true
+      })
+      .timeScale(0);
+  }
+
+  new RunSpin().startGame()
 }

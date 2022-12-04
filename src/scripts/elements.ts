@@ -2,41 +2,9 @@ import * as PIXI from 'pixi.js'
 import { app } from './app';
 import { iReals } from './interfaces';
 
-const REEL_WIDTH = 220
-const SYMBOL_SIZE = 120
+const REEL_WIDTH: number = 220
+const SYMBOL_SIZE: number = 120
 export const reels: iReals[] = [];
-
-function createSprite(typeElem: string | PIXI.Texture[], anchor: number, scaleElem: number | string, widthElem: number, posX: number | string = 0, posY: number | string = 0, add: number = 0): PIXI.Sprite {
-  let elem!: PIXI.Sprite
-  typeof typeElem === 'string' ? elem = PIXI.Sprite.from(typeElem) : elem = new PIXI.Sprite(typeElem[Math.floor(Math.random() * typeElem.length)]);
-  anchor ? elem.anchor.set(anchor) : null;
-  widthElem ? elem.width = widthElem : null;
-  if (scaleElem) typeof scaleElem === 'number' ? elem.scale.set(scaleElem) : elem.scale.set(Math.min(SYMBOL_SIZE / elem.width, SYMBOL_SIZE / elem.height));
-  if (posX) typeof posX === 'number' ? elem.position.x = posX : elem.position.x = Math.round((SYMBOL_SIZE - elem.width) / 2);
-  if (posY) typeof posY === 'number' ? elem.position.y = posY : elem.position.y = add * SYMBOL_SIZE + 10;
-  return elem
-}
-
-function createContainer(posX: number, posY: number): PIXI.Container {
-  const container = new PIXI.Container()
-  posX ? container.position.x = posX : null
-  posY ? container.position.y = posY : null
-  return container
-}
-
-function createFilter(): PIXI.Filter {
-  const filter = new PIXI.filters.ColorMatrixFilter();
-  let count = 0;
-  app.ticker.add(() => {
-    count += 0.1;
-    const { matrix } = filter;
-    matrix[1] = Math.sin(count) * 3;
-    matrix[2] = Math.cos(count);
-    matrix[3] = Math.cos(count) * 1.5;
-    matrix[4] = Math.sin(count / 3) * 2;
-  });
-  return filter
-}
 
 export class Background {
   private view: PIXI.Container
@@ -72,7 +40,7 @@ export class Spin {
     this.spinBg = createSprite('spin_bg', 0.5, 0.7, 0)
     this.spinMainPic = createSprite('spin', 0.5, 0.7, 0, 0, 5)
     this.spinTextStart = createSprite('spin_play', 0.5, 0.7, 0, 0, -50)
-    this.spinTextStop = createSprite('spin_stop', 0.5, 0.7, 0, 0, -65)
+    this.spinTextStop = createSprite('spin_stop', 0.5, 0.7, 0, 0, -55)
     this.spinTextStop.visible = false
     this.spinArrow = createSprite('spin_arrow', 0.5, 0.65, 0, 0, 0)
 
@@ -95,7 +63,6 @@ export class Spin {
     return this.view
   }
 }
-
 
 export class Reels {
   private slotTextures: PIXI.Texture[] = [
@@ -128,27 +95,60 @@ export class Reels {
       reels.push(reel);
     }
 
-      app.ticker.add(() => {
-        for (let i = 0; i < reels.length; i++) {
-            const r = reels[i];
-            r.blur.blurY = (+r.position - r.previousPosition) * 8;
-            r.previousPosition = +r.position;
+    app.ticker.add(() => {
+      for (let i = 0; i < reels.length; i++) {
+        const r = reels[i];
+        r.blur.blurY = (+r.position - r.previousPosition) * 8;
+        r.previousPosition = +r.position;
 
-            for (let j = 0; j < r.symbols.length; j++) {
-                const s = r.symbols[j];
-                const prevy = s.y;
-                s.y = ((+r.position + j) % r.symbols.length) * SYMBOL_SIZE - SYMBOL_SIZE;
-                if (s.y < 0 && prevy > SYMBOL_SIZE) {
-                    s.texture = this.slotTextures[Math.floor(Math.random() * this.slotTextures.length)];
-                    s.scale.x = s.scale.y = Math.min(SYMBOL_SIZE / s.texture.width, SYMBOL_SIZE / s.texture.height);
-                    s.x = Math.round((SYMBOL_SIZE - s.width) / 2);
-                }
-            }
+        for (let j = 0; j < r.symbols.length; j++) {
+          const s = r.symbols[j];
+          const prevy = s.y;
+          s.y = ((+r.position + j) % r.symbols.length) * SYMBOL_SIZE - SYMBOL_SIZE;
+          if (s.y < 0 && prevy > SYMBOL_SIZE) {
+            s.texture = this.slotTextures[Math.floor(Math.random() * this.slotTextures.length)];
+            s.scale.x = s.scale.y = Math.min(SYMBOL_SIZE / s.texture.width, SYMBOL_SIZE / s.texture.height);
+            s.x = Math.round((SYMBOL_SIZE - s.width) / 2);
+          }
         }
+      }
     });
   }
 
   get viewContainer(): PIXI.Container {
     return this.view
   }
+}
+
+function createSprite(typeElem: string | PIXI.Texture[], anchor: number, scaleElem: number | string, widthElem: number, posX: number | string = 0, posY: number | string = 0, add: number = 0): PIXI.Sprite {
+  let elem!: PIXI.Sprite
+  typeof typeElem === 'string' ? elem = PIXI.Sprite.from(typeElem) : elem = new PIXI.Sprite(typeElem[Math.floor(Math.random() * typeElem.length)]);
+  anchor ? elem.anchor.set(anchor) : null;
+  widthElem ? elem.width = widthElem : null;
+  if (scaleElem) typeof scaleElem === 'number' ? elem.scale.set(scaleElem) : elem.scale.set(Math.min(SYMBOL_SIZE / elem.width, SYMBOL_SIZE / elem.height));
+  if (posX) typeof posX === 'number' ? elem.position.x = posX : elem.position.x = Math.round((SYMBOL_SIZE - elem.width) / 2);
+  if (posY) typeof posY === 'number' ? elem.position.y = posY : elem.position.y = add * SYMBOL_SIZE + 10;
+  return elem
+}
+
+function createContainer(posX: number, posY: number): PIXI.Container {
+  const container = new PIXI.Container()
+  posX ? container.position.x = posX : null
+  posY ? container.position.y = posY : null
+  return container
+}
+
+function createFilter(): PIXI.Filter {
+  const filter = new PIXI.filters.ColorMatrixFilter();
+  let count = 0;
+  app.ticker.add(() => {
+    count += 0.1;
+    const { matrix } = filter;
+    matrix[1] = Math.sin(count) * 3;
+    matrix[2] = Math.cos(count);
+    matrix[3] = Math.cos(count) * 1.5;
+    matrix[4] = Math.sin(count / 3) * 2;
+  });
+  
+  return filter
 }
