@@ -23,8 +23,6 @@ Main dependencies:
 
 Node, TypeScript and TSLint should be installed globally.
 
-	$> git clone https://github.com/yahiko00/PixiProject.git <new folder>
-	$> cd <new folder>
 	$> git init
 	$> npm install
 
@@ -43,12 +41,3 @@ The following command builds the project in production mode.
 
 
 For more predefined commands, see `package.json`, item `scripts`.
-
-## Contributors ##
-
-yahiko
-
-
-## Licence ##
-
-MIT
