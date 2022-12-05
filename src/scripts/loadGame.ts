@@ -1,8 +1,9 @@
 import { iTween } from './interfaces';
-import { containerReels, containerSpin, spinRunFunc, startGame } from './playGame';
+import { containerBet, containerReels, containerSpin, countBalance, countBet, spinRunFunc, startGame } from './playGame';
 
 export const tweening: iTween[] = [];
-let arr: string[][] = [[], [], []]
+export let winner: boolean = false
+let newReels: string[][] = [[], [], []]
 
 export const loadGame = (): void => {
   const now = Date.now();
@@ -14,7 +15,7 @@ export const loadGame = (): void => {
     t.object['position'] = +t.propertyBeginValue * (1 - t.easing(phase)) + t.target * t.easing(phase);
 
     if (phase === 1) {
-      startGame ? spinRunFunc(containerSpin, containerReels) : null
+      startGame ? spinRunFunc(containerSpin, containerReels, containerBet) : null
       t.object['position'] = t.target;
       remove.push(t);
     }
@@ -27,19 +28,22 @@ export const loadGame = (): void => {
 }
 
 const gameOver = (): void => {
-  containerSpin.children[1].interactive = true
+  winner = false
 
   containerReels.children.forEach((elements) => {
     (elements as PIXI.Container).children.forEach(elem => {
-      if (Math.floor((elem as PIXI.Sprite).position.y) === 120) arr[0].push((elem as PIXI.Sprite).texture.textureCacheIds[0]);
-      if (Math.floor((elem as PIXI.Sprite).position.y) === 0) arr[1].push((elem as PIXI.Sprite).texture.textureCacheIds[0]);
-      if (Math.floor((elem as PIXI.Sprite).position.y) === -120) arr[2].push((elem as PIXI.Sprite).texture.textureCacheIds[0]);
+      if (Math.floor((elem as PIXI.Sprite).position.y) === 120) newReels[0].push((elem as PIXI.Sprite).texture.textureCacheIds[0]);
+      if (Math.floor((elem as PIXI.Sprite).position.y) === 0) newReels[1].push((elem as PIXI.Sprite).texture.textureCacheIds[0]);
+      if (Math.floor((elem as PIXI.Sprite).position.y) === -120) newReels[2].push((elem as PIXI.Sprite).texture.textureCacheIds[0]);
     })
   })
 
-  arr.forEach(row => {
-    if (row.every((elem) => elem === row[0])) alert('You won!!! Congratulations :)')
+  newReels.forEach(row => {
+    if (row.every((elem) => elem === row[0])) {
+      winner ? null : alert(`You won ${countBet}!!! Congratulations, your balance is ${Math.round((countBalance + countBet * 2) * 100) / 100} :)`)
+      winner = true
+    }
   })
 
-  arr = arr.map(() => [])
+  newReels = newReels.map(() => [])
 }

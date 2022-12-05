@@ -19,3 +19,17 @@ export interface iTween {
   time: number,
   start: number
 };
+
+export enum EnumSpinContainer {
+  Bg,
+  MainPic,
+  TextStart,
+  TextStop,
+  Arrow
+}
+
+export enum EnumBetContainer {
+  Bg,
+  Text,
+  Value
+}

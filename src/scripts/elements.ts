@@ -1,6 +1,7 @@
 import * as PIXI from 'pixi.js'
 import { app } from './app';
 import { iReals } from './interfaces';
+import { countBalance, countBet } from './playGame';
 
 const REEL_WIDTH: number = 220
 const SYMBOL_SIZE: number = 120
@@ -120,6 +121,66 @@ export class Reels {
   }
 }
 
+export class Balance {
+  private view: PIXI.Container
+  private balanceBg: PIXI.Sprite
+  private balanceText: PIXI.Sprite
+  private balanceValue: PIXI.Text
+
+  constructor() {
+    this.view = createContainer(-250, 280)
+
+    this.balanceBg = createSprite('balance_bg', 0.5, 0.5, 0)
+    this.balanceText = createSprite('balance_text', 0.5, 0.7, 0, 0, -20)
+    this.balanceValue = createText(String(countBalance), style, 0.5, 0, 10)
+
+    this.view.addChild(this.balanceBg)
+    this.view.addChild(this.balanceText)
+    this.view.addChild(this.balanceValue)
+
+    const filter = createFilter()
+    this.balanceText.filters = [filter];
+
+    app.ticker.add(() => {
+      this.balanceValue.text = String(Math.round(countBalance * 100) / 100)
+    })
+  }
+
+  get viewContainer(): PIXI.Container {
+    return this.view
+  }
+}
+
+export class BetAmount {
+  private view: PIXI.Container
+  private betBg: PIXI.Sprite
+  private betText: PIXI.Sprite
+  private betValue: PIXI.Text
+
+  constructor() {
+    this.view = createContainer(250, 280)
+
+    this.betBg = createSprite('balance_bg', 0.5, 0.5, 0)
+    this.betText = createSprite('bet_text', 0.5, 0.7, 0, 0, -20)
+    this.betValue = createText(String(countBet), style, 0.5, 0, 10)
+
+    this.view.addChild(this.betBg)
+    this.view.addChild(this.betText)
+    this.view.addChild(this.betValue)
+
+    const filter = createFilter()
+    this.betText.filters = [filter];
+
+    app.ticker.add(() => {
+      this.betValue.text = String(countBet)
+    })
+  }
+
+  get viewContainer(): PIXI.Container {
+    return this.view
+  }
+}
+
 function createSprite(typeElem: string | PIXI.Texture[], anchor: number, scaleElem: number | string, widthElem: number, posX: number | string = 0, posY: number | string = 0, add: number = 0): PIXI.Sprite {
   let elem!: PIXI.Sprite
   typeof typeElem === 'string' ? elem = PIXI.Sprite.from(typeElem) : elem = new PIXI.Sprite(typeElem[Math.floor(Math.random() * typeElem.length)]);
@@ -138,6 +199,14 @@ function createContainer(posX: number, posY: number): PIXI.Container {
   return container
 }
 
+function createText(text: string, style: PIXI.TextStyle, anchor: number, posX: number, posY: number): PIXI.Text {
+  const container = new PIXI.Text(text, style)
+  anchor ? container.anchor.set(anchor) : null
+  posX ? container.position.x = posX : null
+  posY ? container.position.y = posY : null
+  return container
+}
+
 function createFilter(): PIXI.Filter {
   const filter = new PIXI.filters.ColorMatrixFilter();
   let count = 0;
@@ -149,6 +218,17 @@ function createFilter(): PIXI.Filter {
     matrix[3] = Math.cos(count) * 1.5;
     matrix[4] = Math.sin(count / 3) * 2;
   });
-  
+
   return filter
 }
+
+const style = new PIXI.TextStyle({
+  fontFamily: 'Arial',
+  fontSize: 24,
+  fontStyle: 'italic',
+  fontWeight: 'bold',
+  fill: ['#ffffff', '#E1E1E1'],
+  dropShadow: true,
+  dropShadowColor: '#000000',
+  dropShadowBlur: 4,
+});
