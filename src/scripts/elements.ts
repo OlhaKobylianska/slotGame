@@ -181,7 +181,7 @@ export class BetAmount {
   }
 }
 
-function createSprite(typeElem: string | PIXI.Texture[], anchor: number, scaleElem: number | string, widthElem: number, posX: number | string = 0, posY: number | string = 0, add: number = 0): PIXI.Sprite {
+const createSprite = (typeElem: string | PIXI.Texture[], anchor: number, scaleElem: number | string, widthElem: number, posX: number | string = 0, posY: number | string = 0, add: number = 0): PIXI.Sprite => {
   let elem!: PIXI.Sprite
   typeof typeElem === 'string' ? elem = PIXI.Sprite.from(typeElem) : elem = new PIXI.Sprite(typeElem[Math.floor(Math.random() * typeElem.length)]);
   anchor ? elem.anchor.set(anchor) : null;
@@ -192,14 +192,14 @@ function createSprite(typeElem: string | PIXI.Texture[], anchor: number, scaleEl
   return elem
 }
 
-function createContainer(posX: number, posY: number): PIXI.Container {
+const createContainer = (posX: number, posY: number): PIXI.Container => {
   const container = new PIXI.Container()
   posX ? container.position.x = posX : null
   posY ? container.position.y = posY : null
   return container
 }
 
-function createText(text: string, style: PIXI.TextStyle, anchor: number, posX: number, posY: number): PIXI.Text {
+const createText = (text: string, style: PIXI.TextStyle, anchor: number, posX: number, posY: number): PIXI.Text => {
   const container = new PIXI.Text(text, style)
   anchor ? container.anchor.set(anchor) : null
   posX ? container.position.x = posX : null
@@ -207,7 +207,7 @@ function createText(text: string, style: PIXI.TextStyle, anchor: number, posX: n
   return container
 }
 
-function createFilter(): PIXI.Filter {
+const createFilter = (): PIXI.Filter => {
   const filter = new PIXI.filters.ColorMatrixFilter();
   let count = 0;
   app.ticker.add(() => {
